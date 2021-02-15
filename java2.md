@@ -1060,7 +1060,7 @@ public interface PixelFuntion{
 
 * 필드: 인스턴스 변수와 정적 변수를 총칭
 * 멤버: 필드. 메서드, 클래스 내부에 있는 중첩 클래스와 인터페이스를 총칭
-* [접근 제한자로 이동](#접근 제한자)
+* [접근 제한자로 이동](###접근 제한자)
 ```java
 public class Manager extends Employee{
    추가 필드
