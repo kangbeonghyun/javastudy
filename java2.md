@@ -1152,19 +1152,142 @@ public class Manager extends Employee{
 ### *다형성
 
 * 같은 타입이지만 실행 결과가 다양한 객체를 이용할 수 있는 성질, 코드 측면에서 하나의 타입에 여러 객체를 대입함으로써 다양한 기능을 이용할 수 있도록 함.
-* 자바는 다형성을 위해 부모 클래스로 타입 변환을 허용함.
 
+* 자바는 다형성을 위해 부모 클래스로 타입 변환을 허용함=부모 타입에 모든 자식 객체가 대입될 수 있다.(객체의 부품화)
 
+* 클래스의 타입변환은 상속관계 시 발생.
+
+  ```java
+  //한국, 금호, 미세린은 Tire를 상속함.
+  public class Car{
+    Tire t1=new Hankook();
+    Tire t2=new Kumho();
+    
+    Micherin m=new Micherin();
+    Tire t3=m;//자동 타입 변환(프로모션)
+  }
+  ```
+
+* 자동 타입 변환된 이후 부모 클래스에 선언된 필드와 메소드만 접근 가능하다. (변수는 부모 클래스 멤버로만 접근 가능.)(오버라이딩되면 부모 클래스의 메소드가 아닌 자식 클래스의 메소드)
+
+* 자동 타입 변환을 활용하여 다형성을 활용할 수 있는 것.
+
+  ```java
+  class Car{
+    //필드
+    Tire frontleftTire=new Tire();
+      Tire frontrightTire=new Tire();
+      Tire backleftTire=new Tire();
+      Tire backright=new Tire();
+  }
+  
+  //만약 타이어를 더 성능좋은 타이어로 바꾸고 싶다면 자식을 활용
+  Car myCar=new Car();
+  myCar.frontleftTire=new Hankook();//(자동 타입 변환)
+  myCar.backleftTire=new Hankook();//(자동 타입 변환)
+  //이렇게 되면 부모의 메소드 뿐만 아니라 자식에서 오버라이딩 된 더 좋은 메소드를 활용할 수 있다.
+  ```
+
+* 같은 타입이면 배열로 관리
+
+  ```java
+  Tire[] tires={
+    new Tire("앞왼쪽",6),
+      new Tire("앞오른쪽",2),
+      new Tire("뒤왼쪽",3),
+      new Tire("뒤오른쪽",4)
+  };
+  tires[1]=new Kumho("앞 오른쪽",3);
+  ```
+
+* TireExample보자.(320P)
+
+* 매개변수의 다형성
+
+  * 매개변수로 자신이 아닌 자식을 넘겨줄수 있고 이때 자동 타입 변환이 발생하여 다형성을 이용할 수 있다.(만약 해당 자식이 오버라이딩 했다면 더 다양한 역할을 할 수있음.)
+
+    ```java
+    public class Vehicle{
+      public void run(){
+        System.out.println("달립니다")
+      }
+    }
+    
+    public class Driver{
+      public void drive(Vehicle vehicle){
+        vehicle.run();
+      }
+    }
+    
+    public class Bus extends Vehicle{
+      @Override
+      public void run(){
+        System.out.println("다름아닌 버스가 달립니다")
+      }
+    }
+    
+    
+    //main
+    Driver driver=new Driver();
+    Vehicle v=new Vehicle();
+    driver.drive(v);//달립니다. 이건 일반적인
+    driver.drive(new Bus());//버스가 달립니다.
+    ```
+
+* 강제 타입 변환(casting): 자식이 부모타입으로 자동 변환한 후 다시 자식 타입으로 변환할때 사용 가능.
+
+  ```java
+  class Parent{
+    void method1();  
+  }
+  class child extends Parent{
+    void method2();
+  }
+  
+  //main
+  Parent parent=new child();//부모타입으로 자동 변환
+  parent.method2();//이거 불가능 
+  child c=(child)Parent;//부모 타입 됬던 것이 강제 변환
+  c.method2();//가능
+  ```
+
+* 객체 타입 확인(instanceof): 객체 instanceof 타입
+
+  * 객체가 타입의 인스턴이면 트루, 아니면 false
+  * 강제타입변환시 사용(instanceof로 디펜시브 코드 안짜고 강제 타입변환 잘못할 경우 ClassCastException발생)
 
 ### 4.1.8 추상 메서드와 추상 클래스
+
+* 추상 클래스(부모)와 실체 클래스(자식)는 상속관계
+
+* 추상 클래스는 객체를 직접 생성해서 사용할 수 없다, 즉 new 연산자를 이용해서 인스턴스를 생성할 수 없다.
 
 * 구현이 없는 메서드=추상메서드
 
 * 추상 메서드가 포함된 클래스= 추상 클래스
 
-* 클래스에서 추상 메서드를 선언해 서브클래스가 해당 메서드를 구현하도록 강제할 수 있음.
+* 왜 사용하나
+
+  1. 실체 클래스들의 공통된 필드와 메소드의 이름을 **통일**할 목적
+  2. 실체 클래스를 작성할 때 시간을 절약-공통된 필드나 메소드는 추상 클래스에 선언해두고 다른점만 각 실체클래스에 선언할 수 있게된다.
 
 * 추상 클래스는 인터페이스와 달리 인스턴스 변수와 생성자를 포함할 수 있다.
+
+  ```java
+  public abstract class Phone{
+    public String owner;
+    public Phone(String owner){//자식 객체 생성 시 자식에서 super호출하여 추상 클래스 객체를 생성하므로 추상클래스도 생성자가 있어야 한다.
+      this.owner=owner;
+    }
+    public void turnOn(){};
+  }
+  
+  public class SmartPhone extends Phone{
+    public SmartPhone(String owner){
+      super(owner);
+    }
+  }
+  ```
 
 * 추상 클래스의 인스턴스는 생성할 수 없다. 하지만 서브클래스의 객체 참조를 저장한다면 가능
 
@@ -1183,6 +1306,18 @@ public class Manager extends Employee{
   }
   Person p=new Student("Fred",1729)
   ```
+  
+* 추상 메서드와 오버라이딩
+
+  * 메서드 선언 만 같고 실행 내용은 실체 클래스 마다 달라야 하는 경우 추상 클래스는 추상 메서드를 선언할 수 있다. 그리고 실체 클래스에스 해당 추상 메서드의 구현을 강제한다.(오버라이딩을 강제한다, 안하면 컴파일 에러)
+
+    ```java
+    public abstract class Animal{
+      public abstract void sound();//자식에서는 이 메소드 무조건 오버라이딩 해야한다.
+    }
+    ```
+
+    
 
 ### 4.1.9 보호접근(protected)
 
