@@ -952,7 +952,104 @@ System.out.println(s1==s2);//true
 
 * 인터페이스의 다형성_필드의 다형성
 
+  ```java
+  public interface Tire{
+    public void roll();
+  }
+  public class Car{
+  
+    //물론 배열로 해도 된다.
+    Tire frontleftTire=new HankookTire();//자동 타입 변환
+    Tire frontrightTire=new HankookTire();//자동 타입 변환
+    Tire backleftTire=new HankookTire();//자동 타입 변환
+    Tire backrightTire=new HankookTire();//자동 타입 변환
+    
+    void run(){
+      frontleftTire.roll();
+      frontrightTire.roll();
+      backleftire.roll();
+      backrightTire.roll();
+    }
+  }
+  
+  //만약 타이어 교체시
+  Car mycar=new Car();
+  mycar.run();
+  mycar.frontleftTire=new KumhoTire();
+  mycar.run();//이전과 똑같이 호출하나 결과값은 다르다. 
+  ```
 
+* 인터페이스의 다형성_매개변수의 다형성
+
+  * 자동 타입 변환으로 매개변수에 인터페이스 타입 대신 구현 클래스를 넣을 수 있다
+
+    ```java
+    //vehicle은 인터페이스, bus는 구현 클래스.
+    public class Driver{
+      public void drive(Vehicle vehicle){
+        vihicle.run();
+      }
+    }
+    
+    Driver dv=new Driver();
+    Bus bus=new Bus();
+    dv.drive(bus);//이거 가능, 자동 타입 변환, 해당 인터페이스의 어떤 구현 객체라도 올 수 있고 그떄마다 결과 값이 달라진다=다형성
+    ```
+
+* 강제 타입 변환(casting)
+
+  * 구현 객체가 인터페이스 타입으로 자동 변환 되면 인터페이스에 선언된 메소드만 사용 가능하다.(구현 객체의 메소드가 5개 더라도 인터페이스에 선언된 메소드가 3개면 3개밖에 사용할 수 없음)
+
+  * 하지만 그런 경우에 구현 클래스에 선언된 필드와 메소드를 사용해야 한다면 강제 타입 변환을 이용한다(다시 구현 클래스로 변환)
+
+    ```java
+    Vehicle vehicle=new Bus();
+    vehicle.busGo();//busGo는 인터페이스에 선언된 메소드가 아니라 버스에서 추가한 메소드, 이거 호출 불가
+    Bus bus=(Bus)vehicle;//강제 타입 변환, 이렇게 바로 하기 전에 if(vehicle instanceod Bus)로 디펜시브 코드 작성하는 것이 안전하다.
+    bus.busGo();//가능
+    ```
+
+* 인터페이스 상속
+
+  * 인터페이스는 다중 상속을 허용한다.
+
+    ```java
+    public interface InterC extends InterA,InterB{
+      public void methodC();
+    }
+    
+    //InterC의 구현 클래스는 A,B,C의 추상 메소드를 모두 구현해야 한다.
+    ```
+
+* 디폴트 메소드의 필요성
+
+  * 인터페이스를 확장해서 새로운 기능을 추가하기 위해= 디폴트 메소드가 추가되어도 이전 구현 클래스를 그대로 사용할 수 있으면서 새로운 구현 클래스는 디폴트 메소드가 추가되면 그대로 또는 재정의 해서 활용할 수 있음.
+
+  * 인터페이스 상속에서 자식 인터페이스에서 부모 인터페이스의 디폴트 메소드를 활용하는 방법
+
+    1. 디폴트 메소드를 단순 상속
+    2. 재정의(오버라이드)
+    3. 추상 메소드로 재선언
+
+    ```java
+    public interface Parent{
+      public void method1();
+      public default void method2(){
+        //실행문
+      }
+    }
+    
+    public interface Child1 extends Parent{
+      public void method3();
+    }
+    //Child1의 구현 클래스는 method 1과 3를 구현해야 하며 2는 부모 인터페이스의 디폴트 메소드를 호출하여 사용할 수 있다. 
+    //재정의할 경우 자식 인터페이스에서 재정의한 2를 호출할 수 있다
+    //자식 인터페이스에서 추상 메소드로 재선언 한 경우 자식 인터페이스를 구현한 클래스에서는 해당 메소드를 구현하는 실체 메소드를 가져야 한다.
+    ```
+
+    
+
+  
 
 ### 3.1.7 상수
 
@@ -1406,7 +1503,222 @@ public class Manager extends Employee{
     }
     ```
 
+
+### * 중첩 클래스와 중첩 인터페이스
+
+* 중첩 클래스: 클래스 내부에 선언한 클래스, 두 클래스는 서로 쉽게 접근할 수 있으며 외부에서는 불필요한 관계 클래스를 감춤으로써 코드의 복잡성을 줄일 수 있다.
+
+  ```java
+  class Class1{
+    class Class2{
+      
+    }
+  }
+  ```
+
+* 중첩 인터페이스: 클래스 내부에 선언한 인터페이스, 해당 클래스와 긴밀한 관계를 맺는 구현 클래스를 만들기 위해
+
+  ```java
+  class Class1{
+    interface NestedInterface{
+      
+    }
+  }
+  ```
+
+* 중첩 클래스
+
+  * 멤버 클래스: 클래스의 멤버로서 선언되는 중첩 클래스
+
+    * 인스턴스 멤버 클래스: 인스턴스 필드와 메소드만 선언 가능(정적 필드나 메소드는 선언 불가능)
+
+      ```java
+      class A{
+        class B{
+          B(){}//생성자
+          int field;//인스턴스 필드
+          void method(){//인스턴스 메소드
+            //실행문
+          }
+        }
+      }
+      
+      //A클래스 외부에서 인스턴스 멤버 클래스 B의 객체를 생성하려면 먼저 A객체를 생성하고 B객체를 생성해야 함
+      A a=new A();
+      A.B b=a.new B();
+      b.field=3;
+      ```
+
+    * 정적 멤버 클래스: 인스턴스 필드와 메소드 뿐만 아니라 정적 필드와 메소드 모두 선언할 수 있다
+
+      ```java
+      //A 클래스 외부에서 정적 멤버 클래스(C)의 객체를 생성하기 위해서는 A 객체를 생성할 필요 없이 정적 멤버 클래스의 객체를 생성하면 된다.
+      A.C c=new A.C();
+      c.field=3;//인스턴스 필드 사용
+      A.C.field=3;//정적 필드 사용
+      ```
+
+  * 로컬 클래스: 메소드 내부에서 선언되는 중첩 클래스, 메소드 실행 시에만 사용되고 메소드 실행 종료시 없어짐. 접근 제한자 및 static을 붙일 수 없다.(메소드 내부에서만 사용하니까 제한할 필요가 없음) 또한 인스턴스 필드와 메소드만 선언 가능.
+
+    ```java
+    class A{
+    void method(){
+      class D{
+        D(){}//생성자
+        int field;
+      }
+      D d=new D();//이와 같이 메소드 내에서 객체를 생성하고 사용해야 한다.
+      d.field=3;
+    }
+    }
     
+    
+    ////////
+    A a=new A();
+    a.method();//로컬 클래스 객체 생성을 위한 메소드 호출.
+    ```
+
+  *  주로 비동기 처리를 위한 스레드 객체를 만들때 사용
+
+    ```java
+    void method(){
+      class DownloadThread extends Thread{...}
+      DownloadThread thread=new DownloadThread();
+      thread.start();
+    }
+    ```
+
+* 멤버 클래스에서 접근 제한(내부에서 바깥 클래스의 필드와 메소드 접근 시)
+
+  * 인스턴스 멤버 클래스: 바깥 클래스의 모든 필드와 모든 메소드에 접근 가능
+  * 정적 멤버 클래스: 바깥 클래스의 정적 필드와 메소드에만 접근 가능.
+
+* 로컬 클레스에서 사용 제한
+
+  * 로컬 클래스 내부에서는 바깥 클래스의 필드나 메소드를 제한 없이 사용할 수 있다.
+
+  * 로컬 클래스 객체는 메소드 실행이 끝나도 힙 메모리에 존재하여 계속 사용할 수있는데 메소드의 매개변수가 로컬 변수를 사용할 때 메소드가 종료되엇다면 문제가 발생한다.
+
+  *  이 문제를 해결하기 위해 로컬 클래스에서 사용하는 매개변수나 로컬 변수의 값을 로컬 클래스 내부에 복사해 두고 사용한다
+
+  * 그 값들이 수정되어 로컬 클래스에 복사해둔 값과 달라지는 문제를 해결하기 위해 final 키워드를 활용한다.(수정을 막는다) 즉, 로컬 클래스에서 사용된 매개변수와 로컬 변수는 모두 final 특성을 갖는다.
+
+    ```java
+    public void method2(int arg){
+      int localVariable=1;//앞에 final이 붙은 것.
+      clss Inner{
+        public void method(){
+          int result=arg+localVariable;
+        }
+      }
+    }
+    ```
+
+* 중첩 클래스에서 바깥 클래스 참조 얻기
+
+  ```java
+  public class Outter{
+    String field="outter-field";
+    void method(){...}
+    class Nested{
+      String field="Nested-field";
+      void method(){...}
+      void print(){
+        this.method();//중첩 객체 참조
+        Outter.this.method();//바깥 객체 잠조
+      }
+    }
+  }
+  ```
+
+* 중첩 인터페이스
+
+  * 아무 객체나 받는 것이 아니라 내가 속한 클래스 내부에 선언된 중첩 인터페이스를 구현한 객체만 받아야 할 경우
+
+    ```java
+    public class Button{
+      OnClickListener listener;
+      
+      void setOnClickListener(OnClickListener listener){//클래스 내부에 선언된 중첩 인터페이스를 구현한 객체만 받는다.
+        this.listener=listerner;
+      }
+      
+      void touch(){
+        listener.onClick();
+      }
+      
+      interface OnClickListener{
+        void onClick();
+      }
+    }
+    
+    public class CallListener implements Button.OnClickListener{
+      @Override
+      public void onClick(){...};
+    }
+    
+    //main
+    Button btn=new Button();
+    btn.setOnClickListener(new CallListener());//CallListener()=OnClickListener 구현 클래스
+    btn.touch;
+    btn.setOnClickListener(new MessageListener());//messageListener()=OnClickListener 구현 클래스
+    btn.touch;
+    ```
+
+* 익명 객체
+
+  * 단독으로 생성할 수 없고 클래스를 상속하거나 인터페이스를 구현해야만 생성 가능.
+
+  * 자식 클래스가 재사용되지 않고 오로지 해당 필드와 변수의 **초기값**으로만 사용할 경우 익명 자식 객체를 생성해서 초기값으로 대입하는 것이 좋은 방법
+
+  * 익명 자식 객체에 새롭게 정의된 필드나 메소드는 익명 자식 객체 내부에서만 사용되고, 외부에서 해당 필드와 메소드에 접근할 수 없다.(부모 타입에 선언된 것만 사용할 수 있기 때문)
+
+    ```java
+    //클래스 필드를 선언할때
+    class A{
+      Parent field=new Parent(){
+        int childField;
+        void childMethod(){}
+        
+        @Override
+        void parentMethod(){}
+      };
+    }
+    
+    //메소드 내 로컬변수 선언할 때
+    class A{
+      void method(){
+      Parent localVar=new Parent(){
+        int childField;
+        void childMethod(){}
+        
+        @Override
+        void parentMethod(){}
+      };
+    }
+    }
+    //메소드 매개변수가 부모 타입일 경우 메소드 호출할 때 익명 자식 객체를 생성해서 매개값 대입
+    class A{
+      void method1(Parent parent){}
+      void method2(){
+        method1(
+          new Parent(){
+            int childField;
+            void childMethod(){}
+    
+            @Override
+            void parentMethod(){} 
+          }
+        );
+      }
+    }
+    ```
+
+  * 익명 객체의 로컬 변수 사용: 익명 객체 내부에서는 바깥 클래스의 필드나 메소드는 제한없이 사용할 수 있다.
+
+  * 메소드의 매개변수나 로컬변수를 익명 객체에서 사용할 때 객체는 메소드가 종료되어도 힙 메모리에 존재하지만 매개변수나 로컬변수는 스택에서 사라지기 때문에 문제가 발생할 수 있다. 따라서 final 키워드를 사용한다(위와 비슷) 즉 매개변수나 로컬변수는 final의 특성이 있어 변경할 수 없다.
+
+
 
 ### 4.1.9 보호접근(protected)
 
