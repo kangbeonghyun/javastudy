@@ -95,7 +95,7 @@ String str=box.get();
 
      ```java
      Box<Integer> box=<Integer>boxing(100);//1
-     Box<Integet> box=boxing(100);//2
+     Box<Integer> box=boxing(100);//2
      ```
 
 * 메소드의 파라미터로 제네릭 타입이 오는 경우
@@ -118,6 +118,72 @@ String str=box.get();
 ## 13.5 제한된 타입 파라미터
 
 * 예를 들어 숫자 연산을 하는 제네릭 메소드는 매개값으로 Number 또는 하위 클래스 타입의 인스턴스만 가져야 한다.
+
+* 상위 타입은 클래스 뿐만 아니라 인터페이스도 가능하다.(인터페이스라도 implements를 쓰지 않는다)
+
+  ```java
+  //Utils 클래스
+  public <T extends Number> int compare(T t1,T t2){
+    ...
+    return Double.compare(v1,v2);  
+  }
+  
+  //메인
+  int result=Utils.compare(10,20);//number로 제한했기 때문에 Utils.compare("a","b"); 안된다
+  ```
+
+## 13.6 와일드 카드 타입
+
+* 제네릭 타입을 매개값이나 리턴 값으로 사용할 때 3가지 형태로 와일드 카드를 사용할 수 있다
+
+  1. 제네릭타입<?>: 제한없음, 모든 클래스나 인터페이스 타입이 올 수 있다
+  2. 제네릭타입<? extends 상위타입>: ?에는 젤 높아봐야 상위타입까지 올 수 있다(<상위타입).(상위 클래스 제한)
+  3. 제네릭타입<? super 하위타입>: ?에는 젤 낮아봐야 하위타입까지 올 수 있다(>하위타입).(하위 클래스 제한)
+
+* cf) 타입 파라미터로 배열 생성 방법
+
+  ```java
+  private T[] students;
+  students=(T[])(new Object[30]);//new T[n] 형태 안된다.
+  ```
+
+## 13.7 제네릭 타입의 상속과 구현
+
+* 제네렉 타입도 상속을 가질 수 있고 자식 제네릭 타입은 더 많은 타입 파라이터를 가질 수 있다.
+
+  ```java
+  public class ChildProduct<T,M,C> extends Product<T,M>{..}
+  ```
+
+* 제네릭 인터페이스를 구현한 클래스도 제네릭 타입이 된다.
+
+  ```java
+  public interface Storage<T>{
+    public void add(T item,int index);
+    public T get(int index);
+  }
+  
+  public class StorageImpl<T> implements Storage<T>{
+    ...
+  }
+  
+  ```
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
