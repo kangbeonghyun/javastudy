@@ -210,7 +210,351 @@ String str=box.get();
 
 ## 14.3 타겟 타입과 함수적 인터페이스
 
-* 
+* 람다식은 인터페이스 변수에 대입된다. 즉, 람다식은 인터페이스의 익명 구현 객체를 생성한다.
+* 인터페이스는 구현 클래스가 필요한데 람다식은 익명 구현 클래스를 생성하고 객체화한다.
+* 인터페이스에 따라 람다식의 작성법이 달라지므로 람다식이 대입된 인터페이스를 타겟 타입이라 한다.
+
+### 14.3.1 함수적 인터페이스(@FunctionalInterface)
+
+* 함수적 인터페이스: 하나의 추상 메소드가 선언된 인터페이스, 람다식의 타겟 타입이 될 수 있음.(람다식은 하나의 메소드를 정의하기 때문에 여러개 추상 메소드가 선언된 인터페이스는 구현 객체를 생성할 수 없다.)
+* @FuntionalInterface: 함수적 인터페이스를 작성할 때 두개 이상의 추상 메소드가 작성되지 않도록 컴파일러가 체킹할 수 있도록 붙이는 어노테이션.
+
+### 14.3.2 매개 변수와 리턴값이 없는 람다식
+
+```java
+@FunctionalInterface
+public interface A{
+  public void method();
+}
+
+//main
+A fi=()->{...};
+fi.method();//{...}를 실행시킨다.
+```
+
+### 14.3.3 매개 변수가 있는 람다식
+
+```java
+@FunctionalInterface
+public interface B{
+  public void method(int x);
+}
+
+//main
+B fi=(x)->{...};
+fi.method(5);
+```
+
+### 14.3.4 리턴값이 있는 람다식
+
+```java
+@FunctionalInterface
+public interface C{
+  public int method(int x,int y);
+}
+
+//main
+//x+y;대신 메소드 호출도 가능 ex) return sum(x+y);
+C fi=(x,y)->{...return x+y;};//만약 {...}안에 return문밖에 없다면 C fi=(x,y)->x+y;
+int result=fi.method(3,5);
+
+```
+
+## 14.4 클래스 멤버와 로컬변수 사용
+
+* 람다식의 실행 블록에는 클래스의 멤버(필드와 메소드) 및 로컬 변수를 사용할 수있다.
+
+### 14.4.1 클래스의 멤버 사용
+
+* 클래스의 멤버인 필드와 메소드를 제약없이 사용할 수 있다
+
+* 하지만 this 사용시 주의 점이 있다.
+
+  * 일반적으로 익명 객체 내부에서 this 사용 시 익명 객체의 참조이지만 람다식에서는 this는 람다식을 실행한 객체의 참조이다.
+
+    ```java
+    public class UsingThis{
+     public int outterField=10;
+    
+        class Inner{
+            int innerField=20;
+    
+            void functionA(){
+            MyFunctionalInterface fi=()->{
+                System.out.println(outterField);
+                System.out.println(UsingThis.this.outterField);//바깥 객체의 참조를 얻으려면 class.this 사용
+                System.out.println(innerField);
+                System.out.println(this.innerField);//inner객체 참조.
+            };
+            fi.functionA();
+            }
+    
+        }
+    }
+    
+    //main
+    UsintThis usingThis=new UsingThis();
+    UsingThis.Inner inner=usingThis.new Inner();
+    inner.functionA();
+    ```
+
+### 14.4.2 로컬 변수 사용
+
+* 람다식에서 바깥 클래스의 필드나 메소드는 제한 없이 사용할 수 있으나 메소드의 매개변수 또는 로컬 변수를 사용하면 이 두변수는 final 특성을 가져야 한다.(람다식 내부에서 읽을 수는 있지만 람다식 내부 또는 외부에서 변경할 수 없다.)
+  * 즉 람다식 내부에서 쓰이는 변수는 final의 특성을 갖으니 외부 내부에서 추가 변경할 수 없다.
+
+## 14.5 표준 API의 함수적 인터페이스
+
+* 자바 8부터 빈번하게 사용되는 함수적 인터페이스는 표준 API 패키지로 제공한다.
+* 해당 패키지에서 제공하는 함수적 인터페이스의 목적은 메소드 또는 생성자의 **매개 타입으로 사용되어 람다식을 대입**할 수 있도록 하기 위함이다.
+* 크게 5가지 종류가 있다: Consumer, Supplier, Function, Operator, Predicate
+
+### 14.5.1 Consumer 함수적 인터페이스
+
+* 매개 값은 있고 리턴값은 없음.
+
+* accept(): 리턴값은 없고 매개값을 소비하는 메소드
+
+  ```java
+  //인터페이스 명: Consumer<T>   추상 메소드: void accept(T t)
+  Consumer<String> consumer=t->{t를 소비하는 실행문;};//t의 타입은 String
+  //인터페이스 명:BiConsumer<T,U> 추상 메소드: void accept(T t,U u)
+  BiConsumer<String, String> biconsumer=(t,u)->{t와 u를 소비하는 실행문;};//t,u의 타입은 String
+  //인터페이스 명:DoubleConsumer 추상 메소드: void accept(double value)
+  DoubleConsumer dconsumer=d->{d를 소비하는 실행문;};
+  
+  //실제 실행할 때에는 
+  comsumer.accept("hello");
+  bicomsumer.accept("hello","world");
+  dcomsumer.accept(8.0);
+  ```
+
+### 14.5.2 Supplier 함수적 인터페이스
+
+* 매개 변수가 없고 리턴값이 있는 getXXX()메소드.(공급=실행 후 호출한 곳으로 데이터를 리턴.)
+
+  ```java
+  Supplier<String> supplier=()->{...; return "문자열";};
+  IntSupplier intsupplier=()->{...;return int값;}
+  
+  //실행 할 때
+  int num=intsupplier.getAsInt();
+  ```
+
+### 14.5.3 Function 함수적 인터페이스
+
+* 매개값과 리턴값이 있는 applyXXX()메소드
+
+* applyXXX() 메소드들은 매개값을 리턴값으로 매핑(타입 변환)하는 역할을 한다.
+
+  ```java
+  //인터페이스명: Function<T,R>  추상 메소드: R apply(T t) //T를 R로 매핑
+  Function<Student,String> function=t->{return t.getName();}
+  //apply(T t)의 리턴값이 R이므로 람다식{}내부의 return 타입은 R.
+  ```
+
+  ```java
+  //인터페이스명: ToIntFunction<T> 추상 메소드 int applyAsInt(T t) //t를 int로 매핑
+  ToIntFunction<Student> function=t->{return t.getScore();}
+  ```
+
+  ```java
+  //실행할 때
+  public static void printString(Function<Student,String> function){
+    for(Student student:list){
+    System.out.println(function.apply(student));//여기서 람다식 실행
+    }
+  }
+  //main
+  printString(t->t.getName());//printString 호출, 이때 람다식이 실행되는건 아님.
+  ```
+
+### 14.5.4 Operator 함수적 인터페이스
+
+* Function과 동일하게 매개 변수와 리턴값이 있는 applyXXX()메소드를 가지고 있음, 단 리턴값으로 매핑하는 역할보다 매개값을 이용해서 연산을 수행한 후 동일한 타입으로 리턴값을 제공하는 역할.
+
+  ```java
+  //인터페이스명: IntBinaryOperator  //추상 메서드: int applyAsInt(int,int)
+  IntBinaryOperator operator=(a,b)->{...; return int값;}
+  
+  //실제 사용
+  public static int maxOrMin(IntBinaryOperator operator){
+    int result=score[0];
+    for(int score:scores){
+      result=operator.applyAsInt(result,score);
+    }
+    return result;
+  }
+  
+  //main
+  int max=maxOrMin((a,b)->{
+    if(a>b)return a;
+    else return b;
+     }
+  );
+  ```
+
+### 14.5.5 Predicate 함수적 인터페이스
+
+* 매개 변수와 boolean 리턴값이 있는 testXXX()메소드를 가지고 있다. 매개값을 조사해서 boolean을 리턴
+
+  ```java
+  Predicate<Student> predicate=t->{return t.getSex().equals("남자");}
+  
+  //실제 사용
+  public static double avg(Predicate<Student> predicate){
+    int count=0,sum=0;
+    for(Student student:list){
+      if(predicate.test(student)){
+        ...
+      }
+    }
+  }
+  
+  //main
+  double maleAvg=avg(t->t.getSex().equals("남자"));
+  ```
+
+### 14.5.6 andThen()과 compose() 디폴트 메소드
+
+* Consumer, Function, Operator는 andThen(), compose() 디폴트 메소드를 가지고 있다.
+
+* 두 디폴트 메소드는 함수적 인터페이스를 연결하고 첫번째 처리 결과를 두번째 매개값으로 제공해서 최종 결과값을 얻을 때 사용한다.
+
+* andThen(): 앞의 처리 후 뒤에로 넘긴 후 뒤에거 처리.
+
+* Compose():  뒤에꺼 처리 후 앞에에게 넘긴 후 앞에 처리.
+
+* Comsumer의 순차적 연결
+
+  * consumer는 리턴이 없기 때문에 여기서 andThen()은 함수적 인터페이스의 호출 순서만 정한다.
+
+    ```java
+    Comsumer<Member> comsumerA=(m)->{
+      System.out.println(m.getName());
+    };
+    
+    Comsumer<Member> comsumerB=(m)->{
+      System.out.println(m.getId());
+    };
+    
+    Consumer<Member> cousumerAB=consumerA.andThen(consumerB);
+    consymerAB.accept(new Member("홍길동","hong",null));
+    ```
+
+* Function의 순차적 연결
+
+  ```java
+  Function<Member,Address> fuctionA;
+  Function<Address,String> fuctionB;
+  Function<Member,String> fuctionAB;
+  String city;
+  functionA=(m)->m.getAddress();
+  functionB=(a)->a.getCity();
+  functionAB=functionA.andThen(functionB);
+  
+  city=functionAB.apply(
+    new Member("홍길동",'hong',new Address("한국","서울"))
+  );
+  ```
+
+### 14.5.7 and(), or(), negate() 디폴트 메소드와 isEqual() 정적 메소드
+
+* predicate는 and(),or(),negate() 디폴트 메소드를 가지고 있다.(&&,||,!)
+
+  ```java
+  IntPredicate predicateA=a->a%2==0;
+  IntPredicate predicateB=(a)->a%3==0;
+  IntPredicate predicateAB;
+  boolean result;
+  
+  predicateAB=predicateA.and(predicateB);
+  result=predicateAB.test(9);
+  predicateAB=predicateA.or(predicateB);
+  result=predicateAB.test(9);
+  predicateAB=predicateA.negate();
+  result=predicateAB.test(9);
+  ```
+
+* isEqual(): 정적 메소드
+
+  ```java
+  //targetObject, sourceObject 동등비교.
+  Predicate<Object> predicate=Predicate.isEqual(targetObject);
+  boolean result=predicate.test(sourceObject);
+  ```
+
+### 14.5.8 minBy(),maxBy() 정적 메소드
+
+* BinaryOperator<T> 함수적 인터페이스는 minBy(),maxBy() 정적 메소드를 제공한다.
+
+* 매개값으로 제공되는 Comparator를 이용해서 최대 T와 최소 T를 얻는 BinaryOperator<T>를 리턴.
+
+  ```java
+  BinaryOperator<Fruit> binaryOperator;
+  Fruit fruit;
+  
+  binaryOperator=BinaryOperator.minBy((f1,f2)->Integer.compare(f1.price,f2.price));
+  fruit=binaryOperator.apply(new Fruit("딸기",6000),new Fruit("수박",10000));
+  System.out.println(fruit.name);//딸기.
+  ```
+
+## 14.6 메소드 참조
+
+* 메소드를 참조해서 매개 변수의 정보 및 리턴타입을 알아내어 람다식에서 불필요한 매개변수를 제거하는 것이 목적.
+
+  ```java
+  (left,right)->Math.max(left,right);//메소드 참조 안하면
+  Math::max;//메소드 참조하면
+  ```
+
+* 메소드 참조도 람다식과 마찬가지고 인터페이스의 익명 구현 객체로 생성된다.(타겟 타입인 인터페이스의 추상 메소드가 어떤 매개 변수를 가지고, 리턴 타입이 무엇인가에 따라 달라짐.)
+
+### 14.6.1 정적 메소드와 인스턴스 메소드 참조
+
+* 정적 메소드 참조: 클래스::메소드
+* 인스턴스 메소드 참조: (객체 생성 후) 참조 변수::메소드
+
+### 14.6.2 매개 변수의 메소드 참조
+
+* 람다식에서 제공되는 매개변수의 메소드를 호출하거나 매개변수를 매개값으로 사용하는 경우도 있다.
+
+* a의 클래스 이름:: 메소드 이름.
+
+  ```java
+  (a,b)->{a.MethodSomething(b);}//메소드 참조 안하면
+  클래스:: MethodSomething //메소드 참조 하면, 정적 메소드 참조와 비슷해 보이지만 a의 인스턴스 메소드가 참조되므로 전혀 다른 코드임.
+  ```
+
+  ```java
+  ToIntBiFunction<String,String> function;
+  function=(a,b)->a.compareToIgnoreCase(b);//메소드 참조 하면 String::compareToIgnoreCase;
+  System.out.println(function.applyAsInt("Java8","JAVA8"));
+  ```
+
+### 14.6.3 생성자 참조
+
+* 단순히 객체를 생성하고 리턴하도록 구성된 람다식은 생성자 참조로 대치할 수 있다.
+
+  ```java
+  (a,b)=>{return new 클래스(a,b);}//생성자 참조 안하면
+  클래스::new//생성자 참조 하면, 생성자 오버로딩되어 여러개 있을 경우 컴파일러는 함수적 인터페이스의 추상메소드와 동일한 매개 변수 타입과 개수를 가지고 있는 생성자를 찾아 실행한다.없으면 컴파일 에러.
+  ```
+
+  ```java
+  Function<String, Member> function1=Member::new;//생성자 참조
+  Member member1=function1.apply("angel");
+  
+  BiFunction<String, String, Member> function2=Member::new;//생성자 참조
+  Member member2=function2.apply("천사","angel");
+  //두개의 Member::new는 다른 생성자를 호출한다.
+  
+  
+  ```
+
+  
+
+
 
 
 
