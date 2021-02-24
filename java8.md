@@ -887,7 +887,293 @@ Map<K,V> map=new ConcurrentHashMap<K,V>();
   Queue<E> queue=new ConcurrentLinkedQueue<E>();
   ```
 
+
+## 16.1 스트림 소개
+
+* 스트림은 컬렉션의 저장 요소를 하나씩 참조해서 람다식으로 처리할 수 있도록 해주는 반복자이다.
+* java.utils.Collection 소속,
+
+### 16.1.1 반복자 스트림
+
+```java
+List<String> list=Arrays.asList("홍길동","강병현","김자바");
+Iterator<String> iterator=list.Iterator();
+while(iterator.hasNext()){
+  String name=iterator.next();
+}
+
+//스트림으로 변환
+List<String> list=Arrays.asList("홍길동","강병현","김자바");
+Stream<String> stream=list.stream();//stream()로 stream객체를 얻는다. 
+stream.forEach(name->System.out.println(name));
+```
+
+### 16.1.2 스트림의 특징
+
+* iterator와 비슷한 역할을 하는 반복자지만 다음과 같은 점이 다르다.
+
+  * 람다식으로 요소 처리 코드를 제공하는 점
+  * 내부 반복자를 사용하므로 병렬처리가 쉽다는 점
+  * 중간 처리와 최종 처리 작업을 수행하는 점
+
+* 람다식으로 요소 처리 코드를 제공한다
+
+  * stream이 제공하는 대부분의 요소 처리 메소드는 함수적 인터페이스 매개 타입을 가져서 람다식 또는 메소드 참조를 이용해서 요소 처리 내용을 매개값으로 전달할 수 있다.
+
+  ```java
+  Stream<Student> stream=list.stream();
+  stream.forEach(s->{
+   String name=s.getName();
+   System.out.println(name);
+   });//List 컬렉션에서 Student를 가져와 람다식의 매개값(s)으로 제공.
+  ```
+
+* 내부 반복자를 사용하므로 병렬처리가 쉽다.
+
+  * 외부 반복자: 개발자가 코드로 직접 컬렉션의 요소를 반복해서 가져오는 코드 패턴(ex. index를 이용하는 for문, iterator를 활용하는 while문.)
+  * 내부 반복자: 컬렉션 내부에서 요소들을 반복시키고, 개발자는 요소당 처리해야 할 코드만 제공하는 코드 패턴.
+  * 내부 반복자를 사용해서 얻는 이점
+    * 컬렉션 내부에서 어떻게 요소를 반복 시킬지는 컬렉션에 맡겨두고 개발자는 요소 처리 코드에만 집중할 수 있음.
+  * 스트림은 람다식으로 요소 처리 내용만 전달할 뿐 반복은 컬렉션 내부에서 알아서 일어난다.(요소의 병렬처리가 컬랙션 내부에서 처리됨)
+
+  ```java
+  Stream<String> parallelStream=list.parallelStream();
+  parallelStream.forEach(ParallelExample::print);
+  ```
+
+* 중간 처리와 최종 처리를 할 수 있다.
+
+  * 중간처리: 매핑, 필터링, 정렬
+  * 최종처리: 반복, 카운팅, 평균, 총합 등의 집계 처리.
+
+  ```java
+  List<Student> studentList=Arrays.asList( new Student("홍길동",10),...);
+  double avg=studentList.stream()
+    .mapToInt(Student::getScore)//중간처리
+    .average()//최종처리
+    .getAsDouble();//이건 그냥 메소드 호출
+  ```
+
+## 16.2 스트림의 종류
+
+* BaseStream 인터페이스를 부모로 해서 자식 인터페이스들 (Stream, intStream,LongStream,DoubleStream)이 상속관계를 이루고 있다.
+  * Stream: 객체 요소를 처리하는 스트림
+  * ntStream,LongStream,DoubleStream: 기본 타입 요소를 처리하는 스트림.
+
+### 16.2.1 컬렉션으로부터 스트림 얻기
+
+```java
+List<Student> studentList=Arrays.asList( new Student("홍길동",10),...);
+
+Stream<Student> stream=studentList.stream();//List<Student> 컬렉션에서 Stream<Student> 얻어냄. 
+```
+
+### 16.2.2 배열로 부터 스트림 얻기
+
+```java
+String[] strArray={"홍길동","강병현","김자바"};
+Stream<String> strStream=Arrays.stream(strArray);//숫자배열도 같은 방식
+```
+
+### 16.2.3 숫자 범위로 부터 스트림 얻기
+
+```java
+IntStream stream=IntStream.rangeClosed(1,100);//첫번째 매개값부터 두번째 매개값까지 순차적으로 제공하는 IntStream을 리턴. range()는 2번째 매개값 포함 안함.
+stream.forEach(a->sum+=a);
+```
+
+### 16.2.4 파일로부터 스트림 얻기
+
+```java
+//Files.lines() 메소드 이용
+Stream<String> stream=Files.lines(path,Charset.defaultCharset());//path는 파일 경로 정보를 가지고 있는 Path클래스의 객체.
+stream.forEach(System.out::println);
+
+//BufferedReader의 lines() 메소드 이용
+File file=path.toFile();
+FileReader fileReader=new FileReader(file);
+BufferReader br=new BufferReader(fileReader);
+stream=br.lines;
+stream.forEach(System.out::println);
+```
+
+### 16.2.5 디렉토리로부터 스트림 얻기
+
+```java
+Path path=Paths.get("디렉토리 경로");
+Stream<Path> stream=Files.list(path);
+stream.forEach(p->System.out.printlns(p.getFileName()));//p는 서브 디렉토리 또는 파일에 해당하는 Path객체
+```
+
+## 16.3 스트림 파이프라인
+
+* 리덕션: 대량의 데이터를 가공해서 축소하는 것.
+* 컬렉션의 요소를 리덕션의 결과물로 바로 집계할 수 없을 경우에는 필터링, 매핑, 정렬, 그루핑 등의 중간처리가 필요하다.
+
+### 16.3.1 중간 처리와 최종 처리
+
+* 스트림은 중간처리와 최종처리를 파이프라인으로 해결한다.(여러개의 스트림이 연결되어 있는 구조)
+
+* 파이프라인에서 최종처리를 제외하고는 모두 중간 처리 스트림이다.
+
+* 중간 처리는 최종 처리가 시작 되기 전까지 지연(lazy)되고 최종 처리가 시작되면 비로소 하나씩 중간 스트림에서 처리되고 최종처리까지 온다.
+
+* 중간 처리 메소드는 중간 처리된 스트림을 리턴한다.
+
+  ```java
+  List<Member> list=Arrays.asList( new Student("홍길동",10),...);
   
+  double ageAvg=list.stream()
+    .filter(m->m.getSex()==Member.MALE)//남자 Member 객체를 요소로 하는 새로운 스트림 생성
+    .mapToInt(Member::getAge)//Member객체를 age값으로 매핑해서 age를 요소로 하는 새로운 스트림 생성
+    .average()//age 요소들을 평균해서 OptionalDouble에 저장, 최종처리
+    .getAsDouble();//OptionalDouble에서 저장된 평균값을 읽어올때 사용하는 메소드.
+  ```
+
+### 16.3.2 중간 처리 메소드와 최종 처리 메소드
+
+* 표 참고(798p)
+
+## 16.4 필터링(distinct(),filter())
+
+* 모든 스트림(Stream, intStream,LongStream,DoubleStream)이 가지고 있는 공통 메소드.
+
+* distinct(): 중복제거
+
+  * Stream의 경우 Object.equals(Object)가 true면 동일한 객체로 판단->중복 제거
+  * 나머지는 동일 값인 경우 중복 제거
+
+* filter(): 매개값으로 주어진 **Predicate**가 true를 리턴하는 요소만 필터링.
+
+  ```java
+  List<String> names=Arrays.asList("홍길동",....);
+  name.stream()
+    .distinct()
+    .forEach(n->System.out.println(n));
+  
+  name.stream()
+    .filter(n->n.startsWith("강"))
+    .forEach(n->System.out.println(n));
+  
+  name.stream()
+    .distinct()
+    .filter(n->n.startsWith("강"))
+    .forEach(n->System.out.println(n));
+  ```
+
+## 16.5 매핑(flatMapXXX(), mapXXX(),asXXXStream(),boxed())
+
+* 매핑은 스트림의 요소를 다른 요소로 대체하는 작업
+
+### 16.5.1 flatMapXXX() 메소드
+
+* 요소를 대체하는 **복수 개**의 요소들로 구성된 새로운 스트림을 리턴.(Function)
+
+  ```java
+  List<String> inputList=Arrays.asList("aa a","b bb");
+  inputList.stream()
+    .flatMap(data->Arrays.stream(data.split(" ")))
+    .forEach(word->System.out.println(word));//aa,a,b,bb
+  
+  List<String> inputList2=Arrays.asList("10,20,30","40,50,60");
+  inputList2.stream()
+    .flatMapToInt(data->{
+      String[] strArr=data.split(",");
+      int[] intArr=new int[strArr.length];
+      for(int i=0;<strArr.length;i++){
+        intArr[i]=Integer.parseInt(strArr[i].trim());
+      }
+      return Arrays.stream(intArr);
+    })
+    .forEach(number->System.out.println(number));
+  ```
+
+### 16.5.2 mapXXX() 메소드
+
+* 요소를 대체하는 요소로 구성된 새로운 스트림을 리턴.
+
+  ```java
+  List<Student> studentList=Arrays.asList( new Student("홍길동",10),...);
+  studentList.stream()
+    .mapToInt(Student::getScore)
+    .forEach(score->System.out.println(score));
+  ```
+
+### 16.5.3 asDoubleStream(),asLongStream(),boxed() 메소드
+
+* asDoubleStream(): intStream의 int 요소 또는 LongStream의 long요소를 double 요소로 타입 변환해서 DoubleStream을 생성한다.
+* asLongStream(): intStream의 int 요소를 long요소로 타입변환해서 LongStream을 생성
+* boxed(): int,long.double 요소를 Integer,Long,Double 요소로 박싱해서 Stream을 생성
+
+```java
+int[] intArray={1,2,3,4,5};
+IntStream intStream=Arrays.stream(intArray);
+intStream
+  .asDoubleStream()//DoubleStream 생성
+  .forEach(d->System.out.println(d));//1.0, 2.0, ...
+
+IntStream intStream=Arrays.stream(intArray);
+intStream
+  .boxed()//Stream<Integer> 생성
+  .forEach(obj->System.out.println(obj.intValue()));
+```
+
+## 16.6 정렬(sorted)
+
+* 객체 요소일 경우에는 클래스가 Comparable을 구현해야 한다.(안그러면 ClassCastException 발생)
+
+  ```java
+  public class Student implements Comparable<Student>{
+    //필드, 생성자, getter..
+    @Override
+    public int compareTo(Student o){
+      return Integer.compare(score,o.score);
+    }
+  }
+  ```
+
+* 위와 같이 객체 요소가 comparable을 구현한 상태에서 기본 비교(Comparable) 방법으로 정렬하고 싶다면 다음 중 한가지 선택해서 sorted 호출하면 된다
+
+  ```
+  sorted();
+  sorted((a,b)->a.compareTo(b));
+  sorted(Comparator.naturalOrder());
+  ```
+
+  * 만약 객체 요소가 comparable을 구현했지만 기본 비교 방법과 정 반대 방법으로 정렬하고 싶다면
+
+  ```
+  sorted((a,b)->b.compareTo(a));
+  sorted(Comparator.reverseOrder());
+  ```
+
+* 객체 요소가 comparable을 구현하지 않았다면 Comparator를 매개값으로 갖는 sorted() 사용하면 된다.
+
+  ```java
+  sorted((a,b)->{...})//중괄호 안은 비교하는 코드 작성해서 int로 return하는 코드 작성하면 된다.
+  ```
+
+  ```java
+  //숫자 요소일 경우
+  IntStream intStream=Arrays.stream(new int[]{5,3,2,1,4});
+  intStream
+    .sorted()
+    .forEach(n->System.out.println(n));
+  
+  //객체 요소일 경우
+  List<Student> studentList=Arrays.asList( new Student("홍길동",10),...);
+  studentList.stream()
+    .sorted()//역정렬: .sorted(Comparator.reverseOrder())
+    .forEach(s->System.out.println(s.getScore()));
+  ```
+
+## 16.7 루핑(peek(),forEach())
+
+* 루핑: 요소 전체를 반복하는 것.
+
+
+
+
 
 
 
