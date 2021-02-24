@@ -552,7 +552,348 @@ int result=fi.method(3,5);
   
   ```
 
+
+# 15. 컬렉션 프레임워크
+
+## 15.1 컬렉션 프레임워크 소개
+
+* 배열의 문제점을 해결하고 알려져 있는 자료구조를 바탕으로 객체들을 효율적으로 추가, 삭제, 검색할 수 있도록 java.util 패키지에 컬랙션과 관련된 인터페이스와 클래스들을 포함시켜 놓은 것.
+* 컬렉션 프레임워크의 주요 인터페이스와 해당 인터페이스로 사용 가능한 컬렉션 클래스(구현 클래스)
+  * List: ArrayList, Vector, LinkedList
+  * Set: HashSet, TreeSet
+  * Map: HashMap, HashTable, TreeMap, Properties.
+
+## 15.2 List 컬렉션
+
+```java
+List<String> list=...;
+list.add("홍길동");
+list.add(1,"홍길동");
+String str=list.get(1);
+list.remove(0);
+```
+
+### 15.2.1 ArrayList
+
+* 리스트 인터페이스의 구현클래스로, ArrayList에 객체를 추가하면 객체가 인덱스로 관리됨.
+
+* 일반 배열과 다르게 저장 용량이 필요시 자동적으로 늘어남.
+
+  ```java
+  List<String> list=new ArrayList<String>();//디폴트 10개, 초기값 늘리고 싶다면 (30);이런식으로
+  ```
+
+* 특정 인덱스의 객체 삭제 시 뒤에꺼 하나씩 당겨진다
+
+* 특정 인덱스에 객체 삽입 시 뒤로 1칸씩 밀린다.
+
+* 고정된 객체들로 구성된 List를 생성할 때
+
+  ```java
+  List<String> list=Arrays.asList("홍길동","강병현","김자바");
+  ```
+
+## 15.2.2 Vector
+
+* ArrayList와 다른 점은 Vector는 동기화된 메소드로 구성되어 있기 때문에 멀티 스레드가 동시에 이 메소드들을 실행할 수 없고, 하나의 스레드가 실행을 완료 해야 다른 스레드를 실행할 수 있다.(Thread safe)
+
+  ```java
+  List<Board> list=new Vector<Board>();
+  list.add(new board("a","b","c"));
+  ```
+
+### 15.2.3 LinkedList
+
+* ```java
+  List<String> list2=new LinkedList<String>();
+  ```
+
+## 15.3 Set 컬렉션
+
+* 인덱스로 객체를 가져오는 메소드는 없으므로 반복자(Iterator 인터페이스를 구현한 객체)를 이용한다
+
+  ```java
+  Set<String> set=...;
+  Iterator<String> iterator=set.iterator();
+  while(iterator.hasNext()){
+    String str=iterator.next();
+  }
   
+  //또는 반복자 사용하지 않고 향상된 for문 이용할 수도 있다
+  Set<String> set=...;
+  for(String str:set){
+    ...
+  }
+  ```
+
+### 15.3.1 HashSet
+
+* set인터페이스의 구현 클래스.
+
+  ```java
+  Set<String> set=new HashSet<String>();
+  ```
+
+* HashSet은 객체를 저장하기 전에 먼저 객체의 hashCode()메소드를 호출해서 해시코드를 얻어낸다. 이미 저장되어 있는 객체들의 해시코드와 비교해서 같으면 equls()메소드로 두 객체를 비교해서 true가 나오면 그때 동일한 객체로 판단하고 중복저장을 하지 않는다.
+
+  ```java
+  //이건 객체를 키로 할 경우
+  Set<Member> set= new HashSet<>();
+  set.add(new Member("홍길동",30));
+  set.add(new Member("홍길동",30));
+  System.out.println(set.size());//2
+  //따라서 의도한 대로 하려면 equals(), hashCode() 오버라이딩 해서 중복 저장 안되게 해야한다.
+  @Override
+  public boolean equals(Object obj){
+    if(obj instanceof Member){
+      Member member=(Member)obj;
+      return member.name.equals(name)&&(member.age==age);
+    }else return false;
+  }
+  
+  @Override
+  public int hashCode(){
+    return new.hashCode()+age;
+  }
+  
+  ```
+
+## 15.4 Map 컬렉션
+
+* ```java
+  Map<String,Integer> map=...;
+  map.put("홍길동",30);
+  int score=map.get("홍길동");
+  map.remove("홍길동");
+  ```
+
+* 저장된 전체 객체를 대상으로 하나씩 얻고 싶을 경우
+
+  1. KeySet()이용: 모든 키를 Set 컬렉션으로 얻은 다음 반복자를 통해서 키를 얻고 get으로 조회
+
+     ```java
+     Map<K,V> map=~;
+     Set<K> keySet=map.keySet();
+     Iterator<K> keyIterator=keySet.iterator();
+     whike(keyIterator.hasNext()){
+       K key=keyIterator.next();
+       V value=map.get(key);
+     }
+     ```
+
+  2. entrySet()메소드: Map.Entry를 Set 컬렉션으로 얻은 다음 반복자를 통해서 Map.Entry를 하나씩 얻고, getKey, getValue로 값들 조회
+
+     ```java
+     Set<Map.Entry<K,V>> entrySet=map.entrySet();
+     Iterator<Map,Entry<K,V>> entryIterator=entrySet.iterator();
+     while(entryIterator.hasNext()){
+       Map.entry<K,V> entry=entryIterator.next();
+       K key=entry.getKey();
+       V value=entry.getValue();
+     }
+     ```
+
+### 15.4.1 HashMap
+
+* 동일 키가 될 조건은 hashCode()의 리턴값이 같고, equals()메소드가 true를 리턴해야 한다.
+
+* 키와 값의 타입은 기본 타입을 사용할 수 없고 클래스 및 인터페이스 타입만 가능하다.
+
+  ```java
+  Map<String,Integer> map=new HashMap<String,Integer>();
+  ```
+
+### 15.4.2 HashTable
+
+* HashMap과의 차이점은 HashTable은 동기화된 메소드로 구성되어 있기 때문에 멀티 스레드가 동시에 이 메소드들을 실행할 수 없고, 하나의 스레드가 실행을 완료해야만 다른 스레드를 실행할 수 있다(Thread Safe)
+
+  ```java
+  Map<String, Integer> map=new HashTable<String, Integer>();
+  ```
+
+### 15.4.3 Properties
+
+* HashTable의 하위 클래스.
+
+* 키와 값을 String 타입으로 제한한 컬렉션.
+
+* 애플리케이션의 옵션정보, DB연결정도, 다국어 정보가 저장된 프로퍼티 파일(~.properties)읽을 때 주로 사용.
+
+  ```java
+  Properties properties=new Properties();
+  properties.load(new FileReader("프로퍼티 파일 경로"));
+  //cf. class.getResourc(파일): 파일의 상대 경로를 URL 객체로 리턴
+  //getPath(): 파일의 절대경로 리턴.
+  String path=클래스.class.getResource("프로퍼티 파일 명").getPath();
+  Properties properties=new Properties();
+  properties.load(new FileReader(path));
+  String driver=properties.getProperty("driver");//해당 키의 값 읽기.
+  ```
+
+## 15.5 검색 기능을 강화시킨 컬렉션
+
+* TreeSet, TreeMap: 이진 트리 이용해서 계층적 구조(tree 구조)를 가지면서 객체를 저장한다.
+
+### 15.5.1 이진 트리 구조
+
+* 이진 트리가 범위 검색을 쉽게 할 수 있는 이유는 값들이 정렬되어 있어 그룹핑이 쉽기 때문이다.
+
+### 15.5.2 TreeSet
+
+* 이진 트리를 기반으로 한 Set 컬렉션.
+
+* 하나의 노드는 노드값인 **Value**와 왼쪽 오른쪽 자식 노드를 참조하기 위한 두개의 변수로 구성.
+
+  ```java
+  TreeSet<String> treeSet=new TreeSet<String>();
+  //Set 인터페이스 타입 변수에 대입해도 되긴 하지만 이렇게 한 이유는 TreeSet 검색 메소드 사용 위해.
+  ```
+
+* 정렬과 관련된 메소드.
+
+  * descendingIterator(): 내림차순으로 정렬된 Iterator 객체를 리턴
+  * descendingSet(): 내림차순으로 정렬된 NavigableSet 객체를 리턴.
+    * NavigableSet은 TreeSet의 메소드 뿐만 아니라 descendingSet() 메소드도 제공
+
+  ```java
+  NavigableSet<E> descendingSet=treeSet.descendingSet();
+  NavigableSet<E> ascendingSet=descendingSet.descendingSet();//두번 호출하면 오름차순.
+  ```
+
+* 범위 검색 메소드: headSet, tailSet, subSet.
+
+### 15.5.3 TreeMap
+
+* TreeSet과 차이점은 키와 값이 저장된 Map.Entry를 저장한다는 점.(한 노드에 좌우 자식 참조 변수, **Map.Entry**)
+
+* TreeMap에 객체를 저장하면 자동 정렬된다.(tree니까..)
+
+  ```java
+  TreeMap<String, Integer> treeMap=new TreeMap<String,Integer>();
+  //map 인터페이스 타입 변수에 대입해도 되긴 하지만 TreeMap 검색 메소드 사용 위해.
+  ```
+
+* 정렬과 관련된 메소드
+
+  * decendingKeySet(): 내림차순으로 정렬된 키의 NavigableSet객체 리턴.
+  * decendingMap(): 내림차순으로 정렬된 NavigableMap 객체를 리턴, 이하 설명은 TreeSet과 같은 패턴.
+
+  ```java
+  NavigableMap<K,V> descendingMap=treeMap.descendingMap();
+  NavigableMap<K,V> ascendingMap=descendingMap.descendingMap();
+  ```
+
+* 범위 검색 메소드: headMap, tailMap,subMap
+
+### 15.5.4 Comparable과 Comparator
+
+* Integer, String 은 모두 Comparable 인터페이스를 구현하고 있다.
+
+* 사용자 정의 클래스도 Comparable를 구현한다면 자동 정렬이 가능하다.(compareTo메소드를 오버라이드 해야 한다.)
+
+  * compareTo 리턴 타입은 int
+
+  ```java
+  public class Person implements Comparable<Person>{
+    //필드 생성자...
+    @Override
+    public int comparableTo(Person o){
+      if(age<o.age)return -1;
+      else if(age==o.age)return 0;
+      else return 1;
+    }
+  }
+  ```
+
+* Comparable 비구현 객체를 정렬하는 방법: TreeSet 또는 TreeMap의 생성자의 매개값으로 정렬자(Comparator)를 제공하면 된다.
+
+  * 정렬자: Comparator 인터페이스를 구현한 객체.(compareTo메소드가 정의되어 있음.)
+
+  ```java
+  TreeSet<E> treeSet=new TreeSet<E>(new AscendingComparator());
+  ```
+
+  ```java
+  //Fruit class
+  public class fruit{
+    //필드와 생성자., comparable구현은 없다
+  }
+  
+  //DescendingComparator class
+  public class DescendingComparator implements Comparator<Fruit>{
+    @Override
+    public int compareTo(Fruit o1,Fruit o2){
+      if(o1.price<o2.price)return 1;
+      else if(o1.price==o2.price)return 0;
+      else return -1;
+    }
+  }
+  
+  //main
+  TreeSet<Fruit> treeset=new TreeSet<Friut>(new DescendingComparator());
+  ```
+
+## 15.6 LIFO와 FIFO 컬렉션
+
+* 스택이용한 예: JVM 스택 메모기
+* 큐 예: 스레드풀(ExecutorService)의 작업 큐.
+
+### 15.6.1 Stack
+
+```java
+Stack<E> stack=new Stack<E>();
+```
+
+### 15.6.2 Queue
+
+* 링크드리스트는 queue인터페이스를 구현한 대표적인 클래스.
+  * 링크드리스트는 list 인터페이스를 구현했기 때문에 List 컬렉션이기도 함.
+
+```java
+Queue<E> queue=new LinkedList<E>();
+```
+
+## 15.7 동기화된 컬렉션
+
+* Vector, HashTable은 ThreadSafe하지만 ArrayList, HashSet, HashMap은 안전하지 않다.
+
+* 그런 메소드들은 멀티 쓰레드 환경에서 안전하지 않은데, 멀티 쓰레드 환경으로 전달할 필요도 있을 것.
+
+* 컬렉션 프레임워크는 비동기화된 메소드를 동기화된 메소드로 래핑하는 Collections의 synchronizedXXX() 메소드를 제공하고 있다.
+
+  ```java
+  List<T> list=Collections.synchronizedList(new ArrayList<T>());//리스트를 동기화된 리스트로
+  Set<E> set=Collections.synchronizedSet(new HashSet<E>());//맵을 동기화된 맵으로
+  Map<K,V> map=Collections.synchronizedMap(new HashMap<K,V>());//set을 동기화된 set으로
+  ```
+
+## 15.8 병렬 처리를 위한 컬렉션
+
+* 동기화된 컬렉션은 멀티 스레드 환경에서 하나의 thread가 안전하게 처리하도록(다른 스레드 잠금) 도와주지만 빠르지 못함 
+
+* 따라서 병렬처리 가능하기 하는 컬렉션인 java.util.concurrent 패키지의 ConcurrentHashMap,
+
+  ConcurrentLinkedqueue이다. 
+
+* concurrentHashMap은 부분잠금 활용(처리하는 요소가 포함된 부분만 잠금, 나머지는 다른 스레드가 변경할 수 있도록)
+
+```java
+Map<K,V> map=new ConcurrentHashMap<K,V>();
+```
+
+* comcurrentLinkedQueue는 락-프리 알고리즘을 구현한 컬렉션.
+
+  ```java
+  Queue<E> queue=new ConcurrentLinkedQueue<E>();
+  ```
+
+  
+
+
+
+
+
+
 
 
 
