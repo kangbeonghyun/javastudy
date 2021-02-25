@@ -1171,6 +1171,233 @@ intStream
 
 * 루핑: 요소 전체를 반복하는 것.
 
+* peek(): 중간처리 루핑 메소드
+
+* forEach(): 최종처리 루핑 메소드
+
+  ```java
+  int[] intArr={1,2,3,4,5};
+  
+  int total=Arrays.stream(intArr)
+    .peek(n->System.out.println(n))
+    .sum();//최종 처리 메소드
+  
+  Arrays.stream(intArr)
+    .forEach(n->System.out.println(n));
+  ```
+
+## 16.8 매칭(allMatch(),anyMatch(),nonMatch())
+
+* 최종 처리에서 요소들이 특정 조건에 만족하는지 조사할 수 있는 매칭 메소드
+
+* allMatch(): 모든 요소들이 매개값으로 주어진 Predicate의 조건을 만족하는지 조사
+
+* anyMatch(): 최소한 한개의 요소가 매개값으로 주어진 Predicate 조건을 만족하는지 조사
+
+* nonMatch(): 모든 요소들이 매개값으로 주어진 Predicate의 조건을 만족하지 않는지 조사.
+
+  ```java
+  int[] intArr={1,2,3,4,5};
+  
+  boolean result=Arrays.stream(intArr)
+    .allMatch(a->a%2==0);
+  ```
+
+## 16.9 기본 집계(sum(),count(),average(),max(),min())
+
+* 집계: 최종 처리로 하나의 값으로 산출하는 것.(reduction)
+
+### 16.9.1 스트림이 제공하는 기본 집계
+
+* count()의 리턴 타입은 long, sum()의 리턴타입: int,long,double
+
+* 나머지는 Optionalxxx 또는 Optional<T>
+
+* 따라서 값을 얻기 위해서는 get(),getAsDouble(),getAsInt(),getAsLong() 호출해야 함.
+
+  ```java
+  double avg=Arrays.stream(intArr)
+    .filter(n->n%2==0)
+    .average()
+    .getAsDouble();
+  ```
+
+### 16.9.2 Optional 클래스
+
+* Optional 클래스: 단순히 집계 값만 저장하는 것이 아니라, 집계 값이 존재하지 않을 경우 디폴트 값을 설정할 수도 있고, 집계 값을 처리하는 Consumer도 등록할 수 있다.
+
+* 요소가 없을 경우 예외를 피하는 방법
+
+  1. Optioanl객체를 얻어 isPresent()메소드로 여부를 확인(true일때만 처리하도록)
+
+  ```java
+  OptionalDouble optional=list.stream()
+    .mapToInt(Integer::intValue)
+    .average();
+  if(optional.isPresent()){
+    ...
+  }else{
+    ...
+  }
+  ```
+
+  2. orElse()메소드로 디폴트 값을 정해 놓는다.
+
+     ```java
+     double avg=list.stream()
+       .mapToInt(Integer::intValue)
+       .average()
+       .orElse(0.0);
+     ```
+
+  3. ifPresent()메소드로 값이 있을 경우에만 값을 이용하는 람다식을 실행한다
+
+     ```java
+     list.stream()
+       .mapToInt(Integer::intValue)
+       .average()
+       .ifPresent(a->System.out.println(a));
+     ```
+
+## 16.10 커스텀 집계(reduce())
+
+* 각 인터페이스(Stream,intStream,LongStream,DoubleStream)에는 매개 타입으로 XXXOperator,리턴타입으로 OptionalXXX, int, long,double 을 가지는 reduce()메소드가 오버라이딩 되어 있다.
+
+* 스트림에 요소가 전혀 없을 경우 디폴트 값인 identity 매개값이 리턴된다.
+
+  ```java
+  int sum=studentList.stream()
+    .map(Student::getScore)
+    .reduce(0,(a,b)->a+b);//0은 identity값, intBinaryOperator 이용
+  ```
+
+## 16.11 수집(collect())
+
+* 요소들을 필터링 또는 매핑한 후 요소들을 수집.
+* 필요한 효소만 컬렉션으로 담을 수 있고, 요소들을 그룹핑한 후 집계(reduction)할 수 있다.
+
+### 16.11.1 필터링한 요소 수집
+
+* 필터링 또는 매핑된 요소들을 새로운 컬렉션에 수집하고, 이 컬렉션을 리턴.
+* collect(Collector<T,A,R> collector) //리턴 타입은 R
+  * T: 요소
+  * A: 누적기(accumulator)
+  * R: 요소가 저장될 컬렉션
+  * T요소를 A 누적기가 R에 저장한다.
+
+* ToList(): Collectors의 정적메소드 , T를 List에 저장, 리턴타입: Collectors<T,?,List<T>>
+
+```java
+//p819 표 보면 이해 잘 됨
+Stream<Student> totalStream=totalList.stream();//List에서 Stream을 얻는다
+Stream<Student> maleStream=totalStream.filter(s->s.getSex()==Student.Sex.MALE);//남학생만 필터링 해서 Stream을 얻는다
+Collector<Student,?,List<Student>> collector =Collectors.toList();//List에 Student를 수집하는 Collector를 얻는다. ?는 Collector가 R에 T를 저장하는 방법을 알고있어 A가 필요없기 때문에 ?로 표시.
+List<Student> maleList=malsStream.collect(collector);//collect()로 Student를 수집해서 새로운 List를 얻는다.
+
+//위의 코드를 좀더 간단히(변수 생략)
+List<Student> maleList=totalList.stream()
+  .filter(s->s.getSex()==Student.Sex.MALE)
+  .collect(Collectors.toList());
+```
+
+```java
+Stream<Student> totalStream=totalList.stream();
+Stream<Student> femaleStream=totalStream.filter(s->s.getSex()==Student.Sex.FEMALE);
+Supplier<HashSet<Student>> supplier=HashSet::new;//HashSet을 공급하는 Supplier를 얻는다.
+Collector<Student,?,HashSet<Student>>  collector=Collectors.toCollection(supplier);//HashSet에 Student를 수집하는 Collector를 얻는다.
+Set<Student> femaleSet=femaleStream.collect(collector);//collect()로 Student를 수집해서 새로운 HashSet를 얻는다.
+
+//위의 코드에서 변수 생략
+Set<Student> femalSet=totalList.stream()
+  .filter(s->s.getSex()==Student.Sex.FEMALE)
+  .collect(Collectors.toCollection(HashSet::new));
+```
+
+### 16.11.2 사용자 정의 컨테이너에 수집하기
+
+* List, Set, Map과 같은 컬렉션이 아닌 사용자 정의 컨테이너에 수집하기 위함.
+
+* collect(Supplier<R>,XXXConsumer<..>,BiConsumer<R,R>), 리턴타입: R(최종 수집된 컨테이너 객체)
+
+  * Supplier<R>: 요소들이 수집될 컨테이너 객체(R)을 생성하는 역할.(싱글 스레드에선 한개, 멀티 스레드에선 여러개 생성후 합쳐짐)
+  *  XXXConsumer: 컨테이너 객체(R)에 요소(T)를 수집하는 역할, 수집할때마다 실행됨
+  * BiConsumer<R,R>: 컨테이너 객체(R)를 결합하는 역할. 병렬 처리 스트림에서만 호출되어 스레드 별로 생성된 컨테이너 객체를 결합해서 최종 컨테이너 객체를 완성(순차 처리 스트림에서는 리턴 객체가 Supplier가 생성한 객체)
+
+  ```java
+  //824P
+  Stream<Student> totalStream=totalList.stream();
+  Stream<Student> maleStream=totalList.filter(s->s.getSex()==Student.Sex.MALE);
+  
+  Supplier<MaleStudent> supplier=()->new MaleStudent();//MaleStudent를 공급하는 Supplier를 얻는다
+  BiConsumer<MaleStudent,Student> accumulator=(ms,s)->ms.accumulate(s);//MaleStudent 클래스의 accumulate 메소드로 Student를 수집하는 BiConsumer를 얻는다.
+  BiConsumer<MaleStudent, MaleStudent> combiner=(ms1,ms2)->ms1.combine(ms2);//두 개의 MaleStudent를 매개값으로 받아 combine()메소드로 결합하는 BiConsumer를 얻는다.
+  
+  MaleStudent maleStudent=maleStream.collect(supplier,accumulator,combiner);//supplier가 제공하는 MaleStudent에 accumulator가 수집한 Student를 수집해서 최종 처리된 MaleStudent를 얻는다. 싱글스레드에서 combiner는 사용되지 않지만 collect()의 매개값으로 필요하다.
+  
+  //변수 생략하면
+  MaleStudent maleStudent=totalList.stream()
+    .filter(s->s.getSex()==Student.Sex.MALE)
+    .collect(
+    	()->new MaleStudent(),
+    	(r,t)->r.accumulate(t),
+    	(r1,r2)->r1.combiner(r2)
+  	);
+  
+  //람다식을 메소드 참조로 변경하면
+  
+  MaleStudent maleStudent=totalList.stream()
+    .filter(s->s.getSex()==Student.Sex.MALE)
+    .collect(MaleStudent::new,MaleStudent::accumulate,MaleStudent::combine);
+  ```
+
+### 16.11.3 요소를 그룹핑해서 수집
+
+* collect()메소드는 컬렉션의 요소를 그룹핑해서 Map객체를 생성하는 기능도 제공한다.
+
+* collect()호출 시 Collectors의 groupingBy() 또는 groupingByConcurrent()가 리턴하는 Collector를 매개값으로 대입하면 된다.(groupingBy()는 스레드에 안전하지 않은 Map생성, groupingByConcurrent()는 스레드에 안전한 ConcurrentMap생성) 
+
+* groupingBy(Function<T,K> classifier): T를 K로 매핑하고, K키에 저장된 List에 T를 저장한 Map 생성, 리턴 타입: Collector<T,?,Map<K,List<T>>>
+
+  ```java
+  //827P
+  Stream<Student> totalStream=totalList.stream();
+  Function<Student,Student.Sex> classifier=Student::getSex;//Student를 Student.Sex로 매핑하는 Function을 얻는다.
+  Collector<Student,?,Map<Student.Sex,List<Student>>> collector= Collectors.groupingBy(classifier);//Student.Sex가 키가되고 그룹핑된 List<Student>가 값인 Map을 생성하는 Collector를 얻는다
+  Map<Student.Sex,List<Student>> mapBySex=totalStream.collect(collector);//collect()로 Student를 Student.Sex별로 그룹핑해서 Map을 얻는다.
+  
+  //변수 생략하면
+  Map<Student.Sex,List<Student>> mapBySex=totalList.stream()
+    .collect(Collectors.groupingBy(Student::getSex));
+  ```
+
+* groupingBy(Function<T,K> classifier,Collector<T,A,D> collector): T를 K로 매핑하고, K키에 저장된 D객체에 T를 누적한 Map 생성. 리턴 타입: Collector<T,?,Map<K,D>>
+
+  ```java
+  //거주 도시별로 그룹핑하고 나서 같은 그룹에 속하는 학생들의 이름 List를 생성한 후, 거주 도시를 키로, 이름 List를 값으로 갖는 Map을 생성한다.
+  Stream<Student> totalStream=totalList.stream();
+  Function<Student,Student.city> classifier=Student::getCity();//Student를 Student.city로 매핑하는 Function을 얻는다
+  
+  Function<Student,String> mapper=Student::getName;//Student를 이름으로 매핑하는 Function을 얻는다
+  Collector<String,?,List<String>> collector1=Collectors.toList();//이름을 List에 수집하는 Collector를 얻는다.
+  Collector<Student,?,List<String>> collector2=Collectors.mapping(mapper,collector1);//mapping()로 Student를 이름으로 매핑하고 이름을 List에 수집하는 Collector를 얻는다. mapping은 책에 안나와 있는 듯..Collectors의 정적메소드
+  
+  Collector<Student,?,Map<Student.City, List<String>>> collector3=Collectors.groupingBy(classifier,collector2);//Student.city가 키이고, 그룹핑된 이름 List가 값인 Map을 생성하는 Collector를 얻는다.
+  Map<Student.City,List<String>> mapByCity=totalStream.collect(collector3);//collect()로 Student를 Student.City별로 그룹핑해서 Map을 얻는다.
+  
+  //변수 생략 시
+  Map<Student.City,List<String>> mapByCity=totalList.stream()
+    .collect(
+    	Collectors.groupingBy(
+      	Student::getCity,
+        Collectors.mapping(Student::getName,Collectors.toList())
+      )
+     );
+  ```
+
+  
+
+ 
+
 
 
 
