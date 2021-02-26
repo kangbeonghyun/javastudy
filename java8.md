@@ -1356,10 +1356,11 @@ Set<Student> femalSet=totalList.stream()
 
 * collect()호출 시 Collectors의 groupingBy() 또는 groupingByConcurrent()가 리턴하는 Collector를 매개값으로 대입하면 된다.(groupingBy()는 스레드에 안전하지 않은 Map생성, groupingByConcurrent()는 스레드에 안전한 ConcurrentMap생성) 
 
-* groupingBy(Function<T,K> classifier): T를 K로 매핑하고, K키에 저장된 List에 T를 저장한 Map 생성, 리턴 타입: Collector<T,?,Map<K,List<T>>>
+* groupingBy(Function<T,K> classifier): T를 K로 매핑하고, **K키에 저장된 List**에 T를 저장한 Map 생성, 리턴 타입: Collector<T,?,Map<K,List<T>>>
 
   ```java
   //827P
+  //학생들을 성별로 그룹핑한 후 같은 그룹에 속하는 학생 List를 생성후 셩별을 키로, 학생 List를 값으로 갖는 map 생성한다.
   Stream<Student> totalStream=totalList.stream();
   Function<Student,Student.Sex> classifier=Student::getSex;//Student를 Student.Sex로 매핑하는 Function을 얻는다.
   Collector<Student,?,Map<Student.Sex,List<Student>>> collector= Collectors.groupingBy(classifier);//Student.Sex가 키가되고 그룹핑된 List<Student>가 값인 Map을 생성하는 Collector를 얻는다
@@ -1368,9 +1369,13 @@ Set<Student> femalSet=totalList.stream()
   //변수 생략하면
   Map<Student.Sex,List<Student>> mapBySex=totalList.stream()
     .collect(Collectors.groupingBy(Student::getSex));
+  
+  //사용시
+  mapBySet.get(Student.Sex.MALE).stream()
+    .forEach(s->System.out.println(s.getName()));
   ```
 
-* groupingBy(Function<T,K> classifier,Collector<T,A,D> collector): T를 K로 매핑하고, K키에 저장된 D객체에 T를 누적한 Map 생성. 리턴 타입: Collector<T,?,Map<K,D>>
+* groupingBy(Function<T,K> classifier,Collector<T,A,D> collector): T를 K로 매핑하고, **K키에 저장된 D객체**에 T를 누적한 Map 생성. 리턴 타입: Collector<T,?,Map<K,D>>
 
   ```java
   //거주 도시별로 그룹핑하고 나서 같은 그룹에 속하는 학생들의 이름 List를 생성한 후, 거주 도시를 키로, 이름 List를 값으로 갖는 Map을 생성한다.
@@ -1379,7 +1384,7 @@ Set<Student> femalSet=totalList.stream()
   
   Function<Student,String> mapper=Student::getName;//Student를 이름으로 매핑하는 Function을 얻는다
   Collector<String,?,List<String>> collector1=Collectors.toList();//이름을 List에 수집하는 Collector를 얻는다.
-  Collector<Student,?,List<String>> collector2=Collectors.mapping(mapper,collector1);//mapping()로 Student를 이름으로 매핑하고 이름을 List에 수집하는 Collector를 얻는다. mapping은 책에 안나와 있는 듯..Collectors의 정적메소드
+  Collector<Student,?,List<String>> collector2=Collectors.mapping(mapper,collector1);//mapping()로 Student를 이름으로 매핑하고 이름을 List에 수집하는 Collector를 얻는다.mapping에 대한 설명은 다음 챕터에서
   
   Collector<Student,?,Map<Student.City, List<String>>> collector3=Collectors.groupingBy(classifier,collector2);//Student.city가 키이고, 그룹핑된 이름 List가 값인 Map을 생성하는 Collector를 얻는다.
   Map<Student.City,List<String>> mapByCity=totalStream.collect(collector3);//collect()로 Student를 Student.City별로 그룹핑해서 Map을 얻는다.
@@ -1388,15 +1393,90 @@ Set<Student> femalSet=totalList.stream()
   Map<Student.City,List<String>> mapByCity=totalList.stream()
     .collect(
     	Collectors.groupingBy(
-      	Student::getCity,
-        Collectors.mapping(Student::getName,Collectors.toList())
+      	Student::getCity,//키를 도시
+        Collectors.mapping(Student::getName,Collectors.toList())//값으로 가지는 리스트에 저장되는 것이 학생 객체가 아니라 학생의 이름이므로 매핑이 필요.(이름을 리스트에 수집.)
       )
      );
+  
+//사용시
+  mapByCity.get(Student.City.Seoul).stream()
+    .forEach(s->System.out.println(s));
   ```
-
   
 
+### 16.11.4 그룹핑 후 매핑 및 집계
+
+* Collectors.groupingBy()는 그룹핑후 매핑, 집계를 할 수 있도록 두번째 매개값으로 Collector를 가질 수 있다.
+
+* Mapping(Function<T,U> mapper, Collector<U,A,R> collector): T를 U로 매핑 후, U를 R에 수집. 리턴타입: Collector<T,?,R>
+
+* averagingDouble(ToDoubleFunction<T> mapper): T를 Double로 매핑한 후, Double의 평균값을 산출. 리턴타입: Collector<T,?,Double>
+
+  ```java
+  Stream<Student> totalStream=totalList.stream();
+  Function<Student,Student.SEX> classifier=Student::getSex;
+  ToDoubleFunction<Student> mapper=Student::getScore;//Student를 점수로 매핑하는 ToDoubleFunction을 얻는다
+  Collector<Student,?,Double> collector1=Collectors.averagingDouble(mapper);//학생 점수의 평균을 산출하는 Collector를 얻는다.
+  Collector<Student,?,Map<Student.Sex,Double>> collector2=Collectors.groupingBy(classifier,collector1);//Student.SEX가 키이고 평균점수 Double이 값인 Map을 생성하는 Collector를 얻는다.
+  Map<Student.Sex,Double> mapBySex=totalStream.collect(collector2);//Stream의 collect()메소드로 Student를 Student.Sex별로 그룹핑해서 Map을 얻는다.
+  
+  //변수 생략 시
+  Map<Student.Sex,Double> mapBySex=totalList.stream()
+    .collect(
+  		Collectors.groupingBy(
+      	Student::getSex,
+        Collectors.averagingDouble(Student::getScore)
+      )
+  	);
+  ```
+
+## 16.12 병렬 처리
+
+* 병렬처리: 멀티 코어 환경에서 하나의 작업을 분할해서 각각의 코어가 병렬적으로 처리하는 것.
+* 병렬 스트림을 통해 컬렉션(배열)의 전체 요소 처리 시간을 줄여준다.
+
+### 16.12.1 동시성과 병렬성
+
+* 동시성: 멀티 작업을 위해 멀티 스레드가 번갈아가며 실행하는 성질
+* 병렬성: 멀티 작업을 위해 멀티 코어를 이용해서 동시에 실행하는 성질.
+  * 데이터 병렬성: 전체 데이터를 쪼개어 서브 데이터들로 만들고 이 서브 데이터들을 병렬 처리해서 작업을 빨리 끝내는 것.(병렬 스트림은 데이터 병렬성을 구현한 것)
+  * 작업 병렬성: 서로 다른 작업을 병렬처리하는 것.(웹 서버에서 각각의 브라우저에 요청한 내용을 개별 스레드에서 병렬로 처리하는 것과 같은)
+
+### 16.12.2 포크조인 프레임워크
+
+* 병렬 스트림은 요소들을 병렬 처리하기 위해 포크조인 프레임워크를 사용한다.(런타임 시에 동작)
+  * 포크단계: 전체 데이터를 서브 데이터로 분리. 이후 forkJointPool을 거쳐 서브 데이터를 멀티 코어에서 병렬로 처리
+    * ForkJoinPool: ExecutorService의 구현 객체인 ForkJoinPool을 사용해서 작업 스레드를 관리.
+  * 조인단계: 서브 결과를 결합해서 최종 결과를 만들어냄.
+
+### 16.12.3 병렬 스트림 생성
+
+* 병렬 스트림을 얻기 위한 두가지 메소드
+
+  1. ParrallelStream(): Collection으로 부터 병렬 스트림을 바로 리턴.
+  2. Parallel(): 순차 처리 스트림을 병렬 처리 스트림으로 변환해서 리턴.
+
+  ```java
+  MaleStuden maleStudent=totalList.parrallelStream()
+    .filter(s->s.getSex()==Student.Sex.MALE)
+    .collect(MaleStudent::new,MaleStudent::accumulate,::MaleStudent::combine);
+  /*
+  1. 쿼드코어라 할 때, 요소는 4개로 나눠져 4개의 스레드가 병렬처리. 각 스레드는 서브 요소들을 수집해야 하므로 4개의 MaleStudent 객체를 생성하기 위해 MaleStudent::new를 4번 실행시킴.
+  2. 각 스레드는 MaleStudent 객체에 남학생 요소를 수집하기 위해 MaleStudent::accumulate를 매번 실행
+  3. 수집 완료된 4개의 MaleStudent는 3번의 결합(뎁스 말고 결합 횟수, 헷갈릴까봐)으로 최종 MaleStudent가 만들어 질 수 있으므로 MaleStudent::combine이 3번 실행.
+  ```
+
+### 16.12.4 병렬 처리 성능
+
+* 병렬 처리가 무조건적으로 좋은 성능을 가지는 것은 아니다.
+* 병렬 처리에 영향을 미치는 3가지 요인
+  1. 요소의 수와 요소당 처리 시간: 요소의 수가 적고 요소당 처리 시간이 짧으면 순차 처리가 오히려 빠를 수 있다.(병렬 처리는 스레드풀 생성, 스레드 생성이라는 추가적인 비용이 발생하기 때문)
+  2. 스트림 소스의 종류: ArrayList, 배열은 인덱스로 요소를 관리하기 때문에 포크 단계에서 요소를 쉽게 분리할 수 있어 병렬 처리 시간이 절약되지만, HashSet,TreeSet,LinkedList는 요소 분리가 쉽지않고 이는 상대적으로 병렬 처리가 늦음
+  3. 코어의 수: 코어의 수가 많으면 많을 수록 병렬 작업 처리 속도는 빨라진다.
+
  
+
+
 
 
 
